@@ -10,6 +10,7 @@
             "includePath": [
                 "C:/Users/naco1/OneDrive/Documentos/PlatformIO/Projects/Final_project/include",
                 "C:/Users/naco1/OneDrive/Documentos/PlatformIO/Projects/Final_project/src",
+                "C:/Users/naco1/.platformio/packages/framework-arduinoteensy/libraries/Servo",
                 "C:/Users/naco1/.platformio/packages/framework-arduinoteensy/cores/teensy4",
                 "C:/Users/naco1/.platformio/packages/framework-arduinoteensy/libraries/ADC",
                 "C:/Users/naco1/.platformio/packages/framework-arduinoteensy/libraries/AccelStepper/src",
@@ -82,7 +83,6 @@
                 "C:/Users/naco1/.platformio/packages/framework-arduinoteensy/libraries/ST7735_t3/src",
                 "C:/Users/naco1/.platformio/packages/framework-arduinoteensy/libraries/SdFat/src",
                 "C:/Users/naco1/.platformio/packages/framework-arduinoteensy/libraries/SerialFlash",
-                "C:/Users/naco1/.platformio/packages/framework-arduinoteensy/libraries/Servo",
                 "C:/Users/naco1/.platformio/packages/framework-arduinoteensy/libraries/ShiftPWM",
                 "C:/Users/naco1/.platformio/packages/framework-arduinoteensy/libraries/Snooze/src",
                 "C:/Users/naco1/.platformio/packages/framework-arduinoteensy/libraries/SoftPWM",
@@ -117,6 +117,7 @@
                 "path": [
                     "C:/Users/naco1/OneDrive/Documentos/PlatformIO/Projects/Final_project/include",
                     "C:/Users/naco1/OneDrive/Documentos/PlatformIO/Projects/Final_project/src",
+                    "C:/Users/naco1/.platformio/packages/framework-arduinoteensy/libraries/Servo",
                     "C:/Users/naco1/.platformio/packages/framework-arduinoteensy/cores/teensy4",
                     "C:/Users/naco1/.platformio/packages/framework-arduinoteensy/libraries/ADC",
                     "C:/Users/naco1/.platformio/packages/framework-arduinoteensy/libraries/AccelStepper/src",
@@ -189,7 +190,6 @@
                     "C:/Users/naco1/.platformio/packages/framework-arduinoteensy/libraries/ST7735_t3/src",
                     "C:/Users/naco1/.platformio/packages/framework-arduinoteensy/libraries/SdFat/src",
                     "C:/Users/naco1/.platformio/packages/framework-arduinoteensy/libraries/SerialFlash",
-                    "C:/Users/naco1/.platformio/packages/framework-arduinoteensy/libraries/Servo",
                     "C:/Users/naco1/.platformio/packages/framework-arduinoteensy/libraries/ShiftPWM",
                     "C:/Users/naco1/.platformio/packages/framework-arduinoteensy/libraries/Snooze/src",
                     "C:/Users/naco1/.platformio/packages/framework-arduinoteensy/libraries/SoftPWM",
