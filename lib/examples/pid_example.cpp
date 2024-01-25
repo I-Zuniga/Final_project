@@ -2,6 +2,15 @@
  * PID Basic Example
  * Reading analog input 0 to control analog PWM output 3
  ********************************************************/
+#include <Arduino.h>
+#include "Servo.h"
+ 
+// # Install the Adafruit BNO055 library
+#include <Wire.h>
+#include <Adafruit_Sensor.h>
+#include <Adafruit_BNO055.h>
+#include <utility/imumaths.h>
+#include <SPI.h>
 
 #include <PID_v1.h>
 
