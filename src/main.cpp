@@ -28,9 +28,9 @@ Adafruit_BNO055 bno = Adafruit_BNO055(55);
 
 // PID definitions
 #define PIN_INPUT 0 // Read
-#define PIN_OUTPUT 3 // Write 
+// #define PIN_OUTPUT 9 // Write 
 double Setpoint, Input, Output;
-double Kp=1, Ki=0.1, Kd=0.1;
+double Kp=0.5, Ki=0.0, Kd=0.0;
 PID myPID(&Input, &Output, &Setpoint, Kp, Ki, Kd, DIRECT);
 
 char option;
@@ -46,7 +46,7 @@ int i = 0; // Counter for the calibration
 // Change the servo position to the input angle s
 void changeServoPosition(int angle) {
   servo1.write(angle);
-  delay(50);
+  delay(10);
 }
 
 void setAngle() {
@@ -65,12 +65,12 @@ void setAngle() {
 }
 
 void sweepAngle() {
-  // Sweep from 0 to 90 degrees
-  for (int angle = 0; angle < 90; angle++) {
+  // Sweep from 0 to 180 degrees
+  for (int angle = 0; angle < 180; angle++) {
     changeServoPosition(angle);
   }
-  // Sweep from 90 to 0 degrees
-  for (int angle = 90; angle > 0; angle--) {
+  // Sweep from 180 to 0 degrees
+  for (int angle = 180; angle > 0; angle--) {
     changeServoPosition(angle);
   }
 }
@@ -113,7 +113,7 @@ float get_x_axis(){
 
   float x = event.orientation.x;
 
-  delay(100);
+  delay(10);
   return x;
 }
 
@@ -163,12 +163,12 @@ void parser() {
   }
 }
 
-void run_PID(){
-  // Make the PID calculation and return the output
-  Input = analogRead(PIN_INPUT);
-  myPID.Compute();
-  analogWrite(PIN_OUTPUT, Output);
-}
+// void run_PID(){
+//   // Make the PID calculation and return the output
+//   Input = analogRead(PIN_INPUT);
+//   myPID.Compute();
+//   analogWrite(servoPin, Output);
+// }
 
 /*--------------------------------------------*/
 /*-------------SETUP AND MAIN ----------------*/
@@ -205,11 +205,17 @@ void setup()
 
   // PID setup
   Setpoint = 0;
-  Input = analogRead(PIN_INPUT);
+  // Input = analogRead(PIN_INPUT) // Old value 
+  double Input;
   myPID.SetMode(AUTOMATIC);
+  myPID.SetOutputLimits(0,180);
 
   delay(1000);
+  Serial.println(" Hello sweept \n");
+  sweepAngle();
 }
+
+
 
 void loop()
 {
@@ -219,10 +225,12 @@ void loop()
   // get_bno();
   delay(100);
 
+
+
   while (i < 10)
   {
     Serial.print(" Waiting for calibarte: ");
-
+    changeServoPosition(90);
     // Get the angle 
     angle = get_x_axis();
     Serial.print(" Angle: ");
@@ -233,18 +241,32 @@ void loop()
   }
 
 
-  // sweepAngle();
+  // Get the maximun a minimum angle DEPRECATED
+  // for (int i = 0; i < 30; i++) {
+  //   angle = -60 + 10*i;
+  //   changeServoPosition(angle);
+  //   Serial.print(" Angle: ");
+  //   Serial.print(angle, '\n');
+  //   delay(1000);
+  // }
+
   // Make the PID calculation and return the output
   angle = get_x_axis();
   Input = angle;
   myPID.Compute();
-  // analogWrite(PIN_OUTPUT, Output);
+  // analogWrite(PIN_OUPUT, Output);
   changeServoPosition(Output);
+  // analogWrite(servoPin, Output);
+
   Serial.println(" Angle: ");
   Serial.print(angle, '\n');
-
-  Serial.println(" PID output: ");
+  Serial.print(" PID output: ");
   Serial.print(Output, '\n');
+  Serial.print(" Setpoint: ");
+  Serial.print(Setpoint, '\n');
+  Serial.print("Error: ");
+  Serial.print(angle - Setpoint, '\n');
+
   delay(100);
   Serial.println(" \n");
 
