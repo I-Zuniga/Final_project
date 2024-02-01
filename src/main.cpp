@@ -14,7 +14,7 @@
 // PID library 
 #include <PID_v1.h>
 
-
+#include <array>  // std::array
 
 /*--------------------------------------------*/
 /*-----------------DEFINITIONS----------------*/
@@ -30,10 +30,14 @@ Adafruit_BNO055 bno = Adafruit_BNO055(55);
 #define PIN_INPUT 0 // Read
 #define PIN_OUTPUT 3 // Write 
 double Setpoint, Input, Output;
-double Kp=2, Ki=5, Kd=1;
+double Kp=1, Ki=0.1, Kd=0.1;
 PID myPID(&Input, &Output, &Setpoint, Kp, Ki, Kd, DIRECT);
 
 char option;
+
+float angle;
+
+int i = 0; // Counter for the calibration
 
 /*--------------------------------------------*/
 /*-----------------FUNTIONS-------------------*/
@@ -86,6 +90,41 @@ void init_bno(){
 
   Serial.println("BNO055 detected \n");
 }
+
+// CReate a function to return the sensor data as an array
+
+std::array<float, 3> get_axis(){
+    // Get the sensor data
+  sensors_event_t event;
+  bno.getEvent(&event);
+
+  float x = event.orientation.x;
+  float y = event.orientation.y;
+  float z = event.orientation.z;
+
+  delay(100);
+  return {x, y, z};
+}
+
+float get_x_axis(){
+    // Get the sensor data
+  sensors_event_t event;
+  bno.getEvent(&event);
+
+  float x = event.orientation.x;
+
+  delay(100);
+  return x;
+}
+
+// float get_angle(std::array<float, 3> position){
+//   float x = position[0];
+//   float y = position[1];
+//   float z = position[2];
+ 
+//   float angle = atan2(y, x) * 180 / PI;
+//   return angle;
+// }
 
 void get_bno(){
   // Get the sensor data
@@ -142,6 +181,9 @@ void setup()
   servo1.attach(servoPin); // Attaches the servo on pin 3 to the servo object
   Serial.begin(9600);
 
+  changeServoPosition(0);
+  delay(1000);
+
   // Print the options to the serial port
   Serial.println("Initilizing... \n");
   Serial.println("Options: \n");
@@ -162,9 +204,11 @@ void setup()
   // void init_bno(); //TODO CHECK WHY IT DOES NOT WORK
 
   // PID setup
-  Setpoint = 90;
+  Setpoint = 0;
   Input = analogRead(PIN_INPUT);
   myPID.SetMode(AUTOMATIC);
+
+  delay(1000);
 }
 
 void loop()
@@ -172,13 +216,37 @@ void loop()
   digitalWrite(LED_BUILTIN, HIGH); // Turn the LED on (Check if the board is working)
 
   // Calls the function to get the sensor data
-  get_bno();
+  // get_bno();
+  delay(100);
 
+  while (i < 10)
+  {
+    Serial.print(" Waiting for calibarte: ");
+
+    // Get the angle 
+    angle = get_x_axis();
+    Serial.print(" Angle: ");
+    Serial.print(angle, '\n');
+    Setpoint = angle;
+    delay(500);
+    i++;
+  }
+
+
+  // sweepAngle();
   // Make the PID calculation and return the output
-  Input = analogRead(PIN_INPUT);
+  angle = get_x_axis();
+  Input = angle;
   myPID.Compute();
-  analogWrite(PIN_OUTPUT, Output);
+  // analogWrite(PIN_OUTPUT, Output);
+  changeServoPosition(Output);
+  Serial.println(" Angle: ");
+  Serial.print(angle, '\n');
 
+  Serial.println(" PID output: ");
+  Serial.print(Output, '\n');
+  delay(100);
+  Serial.println(" \n");
 
   // get one character from the serial port
   // parser(); // TODO: CHECK WHY THEY ASK TWO TIMES 
