@@ -1,5 +1,8 @@
 #include <Arduino.h>
 #include "Servo.h"
+
+#include <cmath>
+#include <iostream>
  
 // # Install the Adafruit BNO055 library
 #include <Wire.h>
@@ -27,17 +30,51 @@ Servo servo1; // Creates a servo object for controlling the servo motor
 Adafruit_BNO055 bno = Adafruit_BNO055(55);
 
 // PID definitions
-#define PIN_INPUT 0 // Read
+// #define PIN_INPUT 0 // Read
 // #define PIN_OUTPUT 9 // Write 
 double Setpoint, Input, Output;
-double Kp=0.5, Ki=0.0, Kd=0.0;
+double Kp=0.5, Ki=0.1, Kd=0.2;
 PID myPID(&Input, &Output, &Setpoint, Kp, Ki, Kd, DIRECT);
 
 char option;
 
-float angle;
+double angle;
+double calibration_angle = 0;
 
 int i = 0; // Counter for the calibration
+
+
+/*--------------------------------------------*/
+/*-----------------PID CLASS------------------*/
+/*--------------------------------------------*/
+
+class PIDController {
+private:
+    double kp;  // Proportional gain
+    double ki;  // Integral gain
+    double kd;  // Derivative gain
+    double prevError;
+    double integral;
+
+public:
+    PIDController(double p, double i, double d)
+        : kp(p), ki(i), kd(d), prevError(0), integral(0) {}
+
+    double calculate(double setpoint, double processVariable) {
+        double error = setpoint - processVariable;
+        integral += error;
+        double derivative = error - prevError;
+
+        double output = kp * error + ki * integral + kd * derivative;
+
+        prevError = error;
+
+        return output;
+    }
+};
+
+// Create PID controller self written code 
+PIDController pidController(Kp, Ki, Kd);
 
 /*--------------------------------------------*/
 /*-----------------FUNTIONS-------------------*/
@@ -106,12 +143,12 @@ std::array<float, 3> get_axis(){
   return {x, y, z};
 }
 
-float get_x_axis(){
+float get_x_axis(double calibration_angle){
     // Get the sensor data
   sensors_event_t event;
   bno.getEvent(&event);
 
-  float x = event.orientation.x;
+  float x = calibration_angle - event.orientation.x;
 
   delay(10);
   return x;
@@ -182,7 +219,7 @@ void setup()
   Serial.begin(9600);
 
   changeServoPosition(0);
-  delay(1000);
+  delay(3000);
 
   // Print the options to the serial port
   Serial.println("Initilizing... \n");
@@ -199,16 +236,37 @@ void setup()
     Serial.print("Ooops, no BNO055 detected ... Check your wiring or I2C ADDR!");
     while(1);
   }
-  delay(1000); 
   bno.setExtCrystalUse(true);
   // void init_bno(); //TODO CHECK WHY IT DOES NOT WORK
 
-  // PID setup
-  Setpoint = 0;
-  // Input = analogRead(PIN_INPUT) // Old value 
-  double Input;
+
+  while (i < 5)
+  {
+    Serial.print(" Waiting for calibrate: ");
+    changeServoPosition(0);
+    // Get the angle 
+
+    sensors_event_t event;
+    bno.getEvent(&event);
+    angle = event.orientation.x;
+
+
+    Serial.print(" Angle: ");
+    Serial.print(angle);
+    Serial.println("--------------------");
+    delay(500);
+    calibration_angle = angle;
+    // Change the BNO 
+    i++;
+  }  
+
+  // Set PID
+  changeServoPosition(90);
+  delay(1000);
+  Setpoint = get_x_axis(calibration_angle);
   myPID.SetMode(AUTOMATIC);
   myPID.SetOutputLimits(0,180);
+  myPID.SetControllerDirection(DIRECT);
 
   delay(1000);
   Serial.println(" Hello sweept \n");
@@ -226,21 +284,6 @@ void loop()
   delay(100);
 
 
-
-  while (i < 10)
-  {
-    Serial.print(" Waiting for calibarte: ");
-    changeServoPosition(90);
-    // Get the angle 
-    angle = get_x_axis();
-    Serial.print(" Angle: ");
-    Serial.print(angle, '\n');
-    Setpoint = angle;
-    delay(500);
-    i++;
-  }
-
-
   // Get the maximun a minimum angle DEPRECATED
   // for (int i = 0; i < 30; i++) {
   //   angle = -60 + 10*i;
@@ -251,23 +294,31 @@ void loop()
   // }
 
   // Make the PID calculation and return the output
-  angle = get_x_axis();
+  angle = get_x_axis(calibration_angle);
+
+
+  // Self coded PID
+  Output = pidController.calculate( Setpoint, angle);
+  changeServoPosition(Output);
+
+  //library PID
   Input = angle;
   myPID.Compute();
-  // analogWrite(PIN_OUPUT, Output);
-  changeServoPosition(Output);
-  // analogWrite(servoPin, Output);
-
-  Serial.println(" Angle: ");
+  changeServoPosition(int(Output));
+  
+  Serial.print(" Angle: ");
   Serial.print(angle, '\n');
   Serial.print(" PID output: ");
   Serial.print(Output, '\n');
   Serial.print(" Setpoint: ");
   Serial.print(Setpoint, '\n');
-  Serial.print("Error: ");
+  Serial.print(" Error: ");
   Serial.print(angle - Setpoint, '\n');
+  Serial.println(" \n");
+
 
   delay(100);
+  Serial.println("--------------------\n");
   Serial.println(" \n");
 
   // get one character from the serial port
