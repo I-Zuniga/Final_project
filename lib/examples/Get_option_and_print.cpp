@@ -35,6 +35,8 @@ void loop(){
   if (customKey){
     LCD.clear();
     LCD.setCursor(0, 0); 
+    LCD.print("Option: ");
+    LCD.setCursor(0, 1); 
     LCD.print(customKey);
   }
 }
