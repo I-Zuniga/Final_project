@@ -17,11 +17,12 @@ byte colPins[COLS] = {12, 11, 10};  //teensy pins that go to the cols --> 3,1,5
 
 Keypad customKeypad = Keypad(makeKeymap(hexaKeys), rowPins, colPins, ROWS, COLS);
 
-LiquidCrystal_I2C lcd(0x21, 16, 2);  
+const int rs = 17, en = 15, d0 = 23, d1 = 22, d2 = 21, d3 = 20;
+LiquidCrystal LCD(rs, en, d0, d1, d2, d3);  
 
 void setup(){
-  lcd.backlight();
-  lcd.init(); 
+  LCD.backlight();
+  LCD.init(); 
 }
 
 void loop(){
