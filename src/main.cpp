@@ -33,7 +33,7 @@ Adafruit_BNO055 bno = Adafruit_BNO055(55);
 // #define PIN_INPUT 0 // Read
 // #define PIN_OUTPUT 9 // Write 
 double Setpoint, Input, Output;
-double Kp=0.5, Ki=0.1, Kd=0.2;
+double Kp=1, Ki=0.25, Kd=0.2;
 PID myPID(&Input, &Output, &Setpoint, Kp, Ki, Kd, DIRECT);
 
 char option;
@@ -69,6 +69,13 @@ public:
 
         prevError = error;
 
+        // Clip output to the range [0, 180]
+        if (output > 180) {
+            output = 180;
+        } else if (output < 0) {
+            output = 0;
+        }
+
         return output;
     }
 };
@@ -100,6 +107,19 @@ void setAngle() {
     changeServoPosition(angle);
   };
 }
+
+void performMagCal(void) {
+  uint8_t system, gyro, accel, mag;
+  system = gyro = accel = mag = 0;
+
+  while (mag != 3) {
+
+    bno.getCalibration(&system, &gyro, &accel, &mag);
+    Serial.println("");
+  }
+
+  Serial.println("\nMagnetometer calibrated!");
+}  
 
 void sweepAngle() {
   // Sweep from 0 to 180 degrees
@@ -245,7 +265,6 @@ void setup()
     Serial.print(" Waiting for calibrate: ");
     changeServoPosition(0);
     // Get the angle 
-
     sensors_event_t event;
     bno.getEvent(&event);
     angle = event.orientation.x;
@@ -258,7 +277,10 @@ void setup()
     calibration_angle = angle;
     // Change the BNO 
     i++;
-  }  
+  }
+  
+  Serial.println(" Calibrated for angle: ");
+  Serial.print(calibration_angle);
 
   // Set PID
   changeServoPosition(90);
@@ -283,28 +305,17 @@ void loop()
   // get_bno();
   delay(100);
 
-
-  // Get the maximun a minimum angle DEPRECATED
-  // for (int i = 0; i < 30; i++) {
-  //   angle = -60 + 10*i;
-  //   changeServoPosition(angle);
-  //   Serial.print(" Angle: ");
-  //   Serial.print(angle, '\n');
-  //   delay(1000);
-  // }
-
   // Make the PID calculation and return the output
   angle = get_x_axis(calibration_angle);
-
 
   // Self coded PID
   Output = pidController.calculate( Setpoint, angle);
   changeServoPosition(Output);
 
-  //library PID
-  Input = angle;
-  myPID.Compute();
-  changeServoPosition(int(Output));
+  // //library PID
+  // Input = angle;
+  // myPID.Compute();
+  // changeServoPosition(int(Output));
   
   Serial.print(" Angle: ");
   Serial.print(angle, '\n');
