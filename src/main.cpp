@@ -255,7 +255,7 @@ void loop()
 {
   digitalWrite(LED_BUILTIN, HIGH); // Turn the LED on (Check if the board is working)
   
-  LCD.print(" Choose 1, 2 or 3: ");
+  LCD.print(" 1, 2 or 3: ");
   char OptionKey = customKeypad.getKey();
   if (OptionKey){
     LCD.setCursor(6, 1);
