@@ -124,7 +124,7 @@ void setAngle() {
   // Change the servo position
   changeServoPosition(angle);
   };
-}
+
 
 void sweepAngle() {
   // Sweep from 0 to 180 degrees
@@ -221,7 +221,7 @@ void setup()
     LCD.setCursor(6, 1);
     LCD.print(angle);
     delay(500);
-    LDC.clear();
+    LCD.clear();
     calibration_angle = angle;
     // Change the BNO 
     i++;
