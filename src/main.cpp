@@ -10,9 +10,7 @@
 #include <SPI.h>
 
 // Custom libs - Not being used at the moment
-// #include <pid_ctrl.h>
 
-// PID library 
 #include <PID_v1.h>
 
 #include <array>  // std::array
@@ -51,7 +49,7 @@ LiquidCrystal LCD(rs, en, d0, d1, d2, d3);
 
 // PID definitions
 // define PIN_INPUT 0 // Read
-// define PIN_OUTPUT 3 // Write 
+// define PIN_OUTPUT 9 // Write 
 double Setpoint, Input, Output;
 double Kp=1, Ki=0.25, Kd=0.2;
 PID myPID(&Input, &Output, &Setpoint, Kp, Ki, Kd, DIRECT);
@@ -114,17 +112,17 @@ void changeServoPosition(int angle) {
 }
 
 void setAngle() {
-  // Read a position value from the serial port
-  Serial.println("Enter the angle: ");
+  // Read a position value from the keypad
+  char customKey = customKeypad.getKey();
   delay(3000);
-  while (Serial.available() == 0) {
-    delay(10);
+  if (customKey){
+    LCD.clear();
+    LCD.setCursor(0, 0); 
+    LCD.print(" Option: ");
+    LCD.print(customKey);
   }
-  if (Serial.available() > 0) {
-    int angle = Serial.parseInt();
-
-    // Change the servo position
-    changeServoPosition(angle);
+  // Change the servo position
+  changeServoPosition(angle);
   };
 }
 
@@ -140,19 +138,28 @@ void sweepAngle() {
 }
 
 void init_bno(){
+  
   // Initialize the BNO055 sensor
-  Serial.println("Initializing BNO055...");
+  LCD.clear();
+  LCD.setCursor(0, 0);
+  LCD.print("Initalizing");
+  LCD.setCursor(0, 1);
+  LCD.print(" BNO055 ");
+  
   /* Initialise the sensor */
-  if(!bno.begin())
-  {
+  if(!bno.begin()){
     /* There was a problem detecting the BNO055 ... check your connections */
-    Serial.print("Ooops, no BNO055 detected ... Check your wiring or I2C ADDR!");
+    LCD.clear();
+    LCD.setCursor(0, 0);
+    LCD.print(" Error :( ");
+    LCD.setCursor(0, 1);
+    LCD.print(" Not found ");
     while(1);
   }
   delay(1000);
   bno.setExtCrystalUse(true);
-
-  Serial.println("BNO055 detected \n");
+  LCD.clear();
+  LCD.setCursor(0, 0);
 }
 
 // Create a function to return the sensor data as an array
@@ -180,16 +187,8 @@ float get_x_axis(double calibration_angle){
   delay(100);
   return x;
 }
-
-// float get_angle(std::array<float, 3> position){
-//   float x = position[0];
-//   float y = position[1];
-//   float z = position[2];
- 
-//   float angle = atan2(y, x) * 180 / PI;
-//   return angle;
-// }
-
+// Needs to be changed to LCD!!
+//------------------------------------------------------------------
 void get_bno(){
   // Get the sensor data
   sensors_event_t event;
@@ -226,6 +225,7 @@ void parser() {
     sweepAngle();
   }
 }
+//------------------------------------------------------------------------------
 
 
 /*--------------------------------------------*/
@@ -248,35 +248,18 @@ void setup()
     LCD.clear();
     LCD.setCursor(0, 0);
 
-
-  // ------------------------------
-  // This almu doesnt touch it cuz idk what is it doing
   pinMode(LED_BUILTIN, OUTPUT); // Initialize the LED_BUILTIN pin as an output
   servo1.attach(servoPin); // Attaches the servo on pin 3 to the servo object
   Serial.begin(9600);
-  // ------------------------------
     
   // Set the servo at 0º:
   changeServoPosition(0);
   delay(3000);
   
   // Checking initialization of the BNO055 sensor
-  if(!bno.begin())
-  {
-    /* There was a problem detecting the BNO055 ... check your connections */
-    LCD.setCursor(0, 0); 
-    LCD.print(" BNO... ");
-    LCD.setCursor(0, 1); 
-    LCD.print(" Not detected ");
-    while(1);
-  }
-
-  bno.setExtCrystalUse(true);
-  // void init_bno(); //TODO CHECK WHY IT DOES NOT WORK
-  LCD.clear();
-  LCD.setCursor(0, 0);
-  while (i < 5)
-  {
+  init_bno();
+  
+  while (i < 5) {
     LCD.print(" Calibrating ");
     changeServoPosition(0);
     // Get the angle 
@@ -304,8 +287,7 @@ void setup()
 
   LCD.clear();
   LCD.setCursor(0, 0);
-  // ---------------------------------------------------------------------------------
-  // This almu doesnt touch it cuz idk what is it doing
+  
   // Set PID
   changeServoPosition(90);
   delay(1000);
@@ -315,13 +297,16 @@ void setup()
   myPID.SetControllerDirection(DIRECT);
 
   delay(1000);
-  Serial.println(" Hello sweept \n");
+  LCD.print("Hey sweept");
   sweepAngle();
-  // ---------------------------------------------------------------------------------
+  LCD.clear();
+  LCD.setCursor(0, 0);
 }
 
 void loop()
 {
+  digitalWrite(LED_BUILTIN, HIGH); // Turn the LED on (Check if the board is working)
+  
   LCD.print(" Choose 1, 2 or 3: ");
   char OptionKey = customKeypad.getKey();
   if (OptionKey){
@@ -333,13 +318,12 @@ void loop()
     if (OptionKey == 1) {
       LCD.print("Swepth");   // Print what the chosen option does
       delay(500);
-      // HERE WE SHOULD CALL FUNCTION THAT DOES THE SWEPTH
+      sweepAngle();
     }
     if (OptionKey == 2) {
       LCD.print("Imput Angle");   // Print what the chosen option does
       delay(500);
-      // HERE WE CALL THE FUNCTION THAT IMPUTS ANGLE -- RETURNS ANGLE
-      // HERE WE CALL THE FUNCTION THAT MOVES SERVO TO DESIRED ANGLE --INPUT ANGLE, RETURNS NOTHING
+      setAngle();
     }
     if (OptionKey == 3) {
       LCD.print("Const Angle");   // Print what the chosen option does
@@ -352,14 +336,7 @@ void loop()
     LCD.setCursor(0, 0);
     LCD.clear();
   }
-  //Serial.println("--------------------\n");
-  //Serial.println("a - Manualy change the servo position\n");
-  //Serial.println("l - Sweep from 0 to 180 degrees\n");
-
-  // ---------------------------------------------------------------------------------
-  // This almu doesnt touch it cuz idk what is it doing
  
-  digitalWrite(LED_BUILTIN, HIGH); // Turn the LED on (Check if the board is working)
   // Calls the function to get the sensor data
   // get_bno();
   delay(100);
