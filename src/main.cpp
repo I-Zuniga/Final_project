@@ -162,21 +162,7 @@ void init_bno(){
   LCD.setCursor(0, 0);
 }
 
-// Create a function to return the sensor data as an array
-
-std::array<float, 3> get_axis(){
-    // Get the sensor data
-  sensors_event_t event;
-  bno.getEvent(&event);
-
-  float x = event.orientation.x;
-  float y = event.orientation.y;
-  float z = event.orientation.z;
-
-  delay(100);
-  return {x, y, z};
-}
-
+// Create a function to return the sensor x:
 float get_x_axis(double calibration_angle){
     // Get the sensor data
   sensors_event_t event;
@@ -187,45 +173,6 @@ float get_x_axis(double calibration_angle){
   delay(100);
   return x;
 }
-// Needs to be changed to LCD!!
-//------------------------------------------------------------------
-void get_bno(){
-  // Get the sensor data
-  sensors_event_t event;
-  bno.getEvent(&event);
-
-  // Display the floating point data
-  Serial.print("X: ");
-  Serial.print(event.orientation.x, 4);
-  Serial.print("\tY: ");
-  Serial.print(event.orientation.y, 4);
-  Serial.print("\tZ: ");
-  Serial.print(event.orientation.z, 4);
-  Serial.println("");
-
-  delay(100);
-}
-
-// Create a parser function to read the serial port and change the servo position
-void parser() {
-  // get one character from the serial port
-  Serial.println("Parser active \n");
-  option = Serial.read();
-
-  // Wait until response 
-  while (Serial.available() == 0) {
-    delay(10);
-  }
-  // if the character is 'a' then change the servo position
-  if (option == 'a') {
-    setAngle();
-  }
-  // if the character is 'l' then sweep the servo position
-  if (option == 'l') {
-    sweepAngle();
-  }
-}
-//------------------------------------------------------------------------------
 
 
 /*--------------------------------------------*/
@@ -250,7 +197,8 @@ void setup()
 
   pinMode(LED_BUILTIN, OUTPUT); // Initialize the LED_BUILTIN pin as an output
   servo1.attach(servoPin); // Attaches the servo on pin 3 to the servo object
-  Serial.begin(9600);
+  
+  // Serial.begin(9600);
     
   // Set the servo at 0º:
   changeServoPosition(0);
@@ -328,7 +276,9 @@ void loop()
     if (OptionKey == 3) {
       LCD.print("Const Angle");   // Print what the chosen option does
       delay(500);
-      // HERE WE CALL THE FUNCTION THAT MAINTAINS ANGLE
+      angle = get_x_axis(calibration_angle);
+      Output = pidController.calculate( Setpoint, angle);
+      changeServoPosition(Output);
     }
     else {
       LCD.print("1 2 or 3");   // Print what the chosen option does
@@ -336,39 +286,6 @@ void loop()
     LCD.setCursor(0, 0);
     LCD.clear();
   }
- 
-  // Calls the function to get the sensor data
-  // get_bno();
-  delay(100);
-
-  // Make the PID calculation and return the output
-  angle = get_x_axis(calibration_angle);
-
-  // Self coded PID
-  Output = pidController.calculate( Setpoint, angle);
-  changeServoPosition(Output);
-
-  // //library PID
-  // Input = angle;
-  // myPID.Compute();
-  // changeServoPosition(int(Output));
-  
-  Serial.print(" Angle: ");
-  Serial.print(angle, '\n');
-  Serial.print(" PID output: ");
-  Serial.print(Output, '\n');
-  Serial.print(" Setpoint: ");
-  Serial.print(Setpoint, '\n');
-  Serial.print(" Error: ");
-  Serial.print(angle - Setpoint, '\n');
-  Serial.println(" \n");
-
-
-  delay(100);
-  Serial.println("--------------------\n");
-  Serial.println(" \n");
-
-  // get one character from the serial port
-  // parser(); // TODO: CHECK WHY THEY ASK TWO TIMES
+  delay(1000);
   // ---------------------------------------------------------------------------------
 }
