@@ -33,7 +33,13 @@ Adafruit_BNO055 bno = Adafruit_BNO055(55);
 // #define PIN_INPUT 0 // Read
 // #define PIN_OUTPUT 9 // Write 
 double Setpoint, Input, Output;
-double Kp=1, Ki=0.25, Kd=0.2;
+// double Kp=0.8, Ki=0.07, Kd=0.1;
+double Kp=0.8, Ki=0.8, Kd=0.1;
+
+// double Kp=2, Ki=0.25, Kd=0.0;
+
+// double Kp=1, Ki=0, Kd=0;
+
 PID myPID(&Input, &Output, &Setpoint, Kp, Ki, Kd, DIRECT);
 
 char option;
@@ -60,8 +66,8 @@ public:
     PIDController(double p, double i, double d)
         : kp(p), ki(i), kd(d), prevError(0), integral(0) {}
 
-    double calculate(double setpoint, double processVariable) {
-        double error = setpoint - processVariable;
+    double calculate(double setpoint, double angle) {
+        double error = setpoint - angle;
         integral += error;
         double derivative = error - prevError;
 
@@ -69,15 +75,22 @@ public:
 
         prevError = error;
 
+        Serial.print("error: ");
+        Serial.print(error);
+
         // Clip output to the range [0, 180]
-        if (output > 180) {
-            output = 180;
-        } else if (output < 0) {
-            output = 0;
-        }
+        // if (output > 180) {
+        //     output = 180;
+        // } else if (output < 0) {
+        //     output = 0;
+        // }
+
+        Serial.print(" output: ");
+        Serial.print(output);
 
         return output;
     }
+
 };
 
 // Create PID controller self written code 
@@ -285,14 +298,16 @@ void setup()
   // Set PID
   changeServoPosition(90);
   delay(1000);
+  // Setpoint = 90;
   Setpoint = get_x_axis(calibration_angle);
+
   myPID.SetMode(AUTOMATIC);
   myPID.SetOutputLimits(0,180);
   myPID.SetControllerDirection(DIRECT);
 
-  delay(1000);
+  // delay(1000);
   Serial.println(" Hello sweept \n");
-  sweepAngle();
+  // sweepAngle();
 }
 
 
@@ -310,21 +325,22 @@ void loop()
 
   // Self coded PID
   Output = pidController.calculate( Setpoint, angle);
-  changeServoPosition(Output);
+  changeServoPosition(angle + Output);
 
   // //library PID
   // Input = angle;
   // myPID.Compute();
   // changeServoPosition(int(Output));
+        // double error = setpoint - processVariable;
   
   Serial.print(" Angle: ");
   Serial.print(angle, '\n');
-  Serial.print(" PID output: ");
-  Serial.print(Output, '\n');
+  // Serial.print(" PID output: ");
+  // Serial.print(Output+ angle, '\n');
   Serial.print(" Setpoint: ");
   Serial.print(Setpoint, '\n');
   Serial.print(" Error: ");
-  Serial.print(angle - Setpoint, '\n');
+  Serial.print(Setpoint-angle, '\n');
   Serial.println(" \n");
 
 
