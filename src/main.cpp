@@ -1,17 +1,22 @@
 #include <Arduino.h>
-#include "Servo.h"
 
 #include <cmath>
 #include <iostream>
+#include <array>  // std::array
+
  
-// # Install the Adafruit BNO055 library
+//  Adafruit BNO055 library
 #include <Wire.h>
 #include <Adafruit_Sensor.h>
 #include <Adafruit_BNO055.h>
 #include <utility/imumaths.h>
 #include <SPI.h>
 
-#include <array>  // std::array
+//  Servo library
+#include "Servo.h"
+
+// Custom libraries
+#include "servo_control.h"
 
 /*--------------------------------------------*/
 /*----------DEFINITIONS & VARIABLES-----------*/
@@ -24,148 +29,18 @@ Servo servo1; // Creates a servo object for controlling the servo motor
 Adafruit_BNO055 bno = Adafruit_BNO055(55);
 
 // PID Variables
-double Setpoint, Input, Output;
-double Kp=0.8, Ki=0.8, Kd=0.1;
+float Setpoint, Input, Output;
+float Kp=0.8, Ki=0.8, Kd=0.1;
 
 char option;
-double angle;
-double calibration_angle = 0;
+float angle;
+float calibration_angle = 0;
 
-/*--------------------------------------------*/
-/*-----------------PID CLASS------------------*/
-/*--------------------------------------------*/
-
-class PIDController {
-private:
-    double kp;  // Proportional gain
-    double ki;  // Integral gain
-    double kd;  // Derivative gain
-    double prevError;
-    double integral;
-
-public:
-    PIDController(double p, double i, double d)
-        : kp(p), ki(i), kd(d), prevError(0), integral(0) {}
-
-    double calculate(double setpoint, double angle) {
-        double error = setpoint - angle;
-        integral += error;
-        double derivative = error - prevError;
-
-        double output = kp * error + ki * integral + kd * derivative;
-
-        prevError = error;
-
-        return output;
-    }
-
-};
-
-// Initialice PID controller
 PIDController pidController(Kp, Ki, Kd);
-
-
-/*--------------------------------------------*/
-/*-----------------FUNCTIONS------------------*/
-/*--------------------------------------------*/
-
-// Change the servo position to the input angle s
-void changeServoPosition(int angle) {
-  servo1.write(angle);
-  delay(10);
-}
-
-void setAngle() {
-  // Read a position value from the serial port
-  Serial.println("Enter the angle: ");
-  delay(3000);
-  while (Serial.available() == 0) {
-    delay(10);
-  }
-  if (Serial.available() > 0) {
-    int angle = Serial.parseInt();
-    // Change the servo position
-    changeServoPosition(angle);
-  };
-}
-
-void sweepAngle() {
-  // Sweep from 0 to 180 degrees
-  for (int angle = 0; angle < 180; angle++) {
-    changeServoPosition(angle);
-  }
-  // Sweep from 180 to 0 degrees
-  for (int angle = 180; angle > 0; angle--) {
-    changeServoPosition(angle);
-  }
-}
-
-// Returns the sensor data as array [x,y,z] (Not used in main)
-std::array<float, 3> get_axis_data(){
-    // Get the sensor data
-  sensors_event_t event;
-  bno.getEvent(&event);
-
-  float x = event.orientation.x;
-  float y = event.orientation.y;
-  float z = event.orientation.z;
-
-  delay(100);
-  return {x, y, z};
-}
-
-float get_x_axis(double calibration_angle){
-    // Get the sensor data
-  sensors_event_t event;
-  bno.getEvent(&event);
-  float x = calibration_angle - event.orientation.x;
-
-  delay(10);
-  return x;
-}
-
-void print_bno_data(){
-  // Get the sensor data
-  sensors_event_t event;
-  bno.getEvent(&event);
-
-  // Display the floating point data
-  Serial.print("X: ");
-  Serial.print(event.orientation.x, 4);
-  Serial.print("\tY: ");
-  Serial.print(event.orientation.y, 4);
-  Serial.print("\tZ: ");
-  Serial.print(event.orientation.z, 4);
-  Serial.println("");
-
-  delay(100);
-}
-
-// Create a parser function to read the serial port and change the servo position
-void parser() {
-  // get one character from the serial port
-  Serial.println("Parser active \n");
-  option = Serial.read();
-
-  // Wait until response 
-  while (Serial.available() == 0) {
-    delay(10);
-  }
-  // if the character is 'a' then change the servo position
-  if (option == 'a') {
-    setAngle();
-  }
-  // if the character is 'l' then sweep the servo position
-  if (option == 'l') {
-    sweepAngle();
-  }
-}
-
 
 /*--------------------------------------------*/
 /*-------------SETUP AND MAIN ----------------*/
 /*--------------------------------------------*/
-
 
 void setup()
 {
@@ -173,7 +48,7 @@ void setup()
   servo1.attach(servoPin); // Attaches the servo on pin 3 to the servo object
   Serial.begin(9600);
 
-  changeServoPosition(0);
+  changeServoPosition(0, servo1);
   delay(3000);
 
   // Print the options to the serial port
@@ -197,7 +72,7 @@ void setup()
   while (int i = 0  < 5)
   {
     Serial.print(" Waiting for calibrate: ");
-    changeServoPosition(0);
+    changeServoPosition(0, servo1);
     // Get the angle 
     sensors_event_t event;
     bno.getEvent(&event);
@@ -215,14 +90,14 @@ void setup()
   Serial.print(calibration_angle);
 
   // Set PID angle objetive
-  changeServoPosition(90); // Focus in the mean angle (maximun rotation)
+  changeServoPosition(90,  servo1); // Focus in the mean angle (maximun rotation)
   delay(1000);
-  Setpoint = get_x_axis(calibration_angle);
+  Setpoint = get_x_axis(calibration_angle, bno);
 
   // Performs a friendly sweept to check everything is working 
   delay(500);
   Serial.println(" Hello sweept \n");
-  sweepAngle();
+  sweepAngle(servo1);
 }
 
 
@@ -232,9 +107,9 @@ void loop()
   digitalWrite(LED_BUILTIN, HIGH); // Turn the LED on (Check if the board is working)
 
   // Make the PID calculation and return the output
-  angle = get_x_axis(calibration_angle);
+  angle = get_x_axis(calibration_angle, bno);
   Output = pidController.calculate(Setpoint, angle);
-  changeServoPosition(angle + Output);
+  changeServoPosition(angle + Output, servo1);
 
   Serial.print(" Angle: ");
   Serial.print(angle, '\n');
