@@ -131,7 +131,7 @@ void sweepAngle() {
   for (int angle = 0; angle < 180; angle++) {
     changeServoPosition(angle);
   }
-  // Sweep from 90 to 0 degrees
+  // Sweep from 180 to 0 degrees
   for (int angle = 180; angle > 0; angle--) {
     changeServoPosition(angle);
   }
@@ -206,7 +206,7 @@ void setup()
   
   // Checking initialization of the BNO055 sensor
   init_bno();
-  
+  // I dont know why we need the calibration while -----------------------------------
   while (i < 5) {
     LCD.print(" Calibrating ");
     changeServoPosition(0);
@@ -229,13 +229,14 @@ void setup()
   LCD.clear();
   LCD.setCursor(0, 0);
   
-  LCD.print(" Calibrated for: ");
+  LCD.print("Calibrated:");
   LCD.setCursor(6, 1);
-  LCD.print(calibration_angle);
+  LCD.print("Angle: ", calibration_angle);
 
   LCD.clear();
   LCD.setCursor(0, 0);
-  
+  // ---------------------------------------------------------------------------------
+  //What is this part actually doing and why do we need it here? -----------------------
   // Set PID
   changeServoPosition(90);
   delay(1000);
@@ -243,18 +244,23 @@ void setup()
   myPID.SetMode(AUTOMATIC);
   myPID.SetOutputLimits(0,180);
   myPID.SetControllerDirection(DIRECT);
+  // -----------------------------------------------------------------------------------
 
+  // delete this part: -----------------------------------------------------------
   delay(1000);
   LCD.print("Hey sweept");
   sweepAngle();
+  // ------------------------------------------------------------------------------
+  
   LCD.clear();
   LCD.setCursor(0, 0);
 }
 
 void loop()
 {
+  // we dont have a led anymore ------------------------------------------------------
   digitalWrite(LED_BUILTIN, HIGH); // Turn the LED on (Check if the board is working)
-  
+  // ---------------------------------------------------------------------------------
   LCD.print(" 1, 2 or 3: ");
   char OptionKey = customKeypad.getKey();
   if (OptionKey){
@@ -281,7 +287,11 @@ void loop()
       changeServoPosition(Output);
     }
     else {
-      LCD.print("1 2 or 3");   // Print what the chosen option does
+      LCD.clear();
+      LCD.setCursor(0, 0);
+      LCD.print("Choose valid");
+      LCD.setCursor(0, 1);
+      LCD.print("option");
     }
     LCD.setCursor(0, 0);
     LCD.clear();
