@@ -1,10 +1,8 @@
 #include <Arduino.h>
-
 #include <cmath>
 #include <iostream>
 #include <array>  // std::array
 
- 
 //  Adafruit BNO055 library
 #include <Wire.h>
 #include <Adafruit_Sensor.h>
@@ -99,8 +97,6 @@ void setup()
   Serial.println(" Hello sweept \n");
   sweepAngle(servo1);
 }
-
-
 
 void loop()
 {
