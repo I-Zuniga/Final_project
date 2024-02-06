@@ -39,7 +39,6 @@ LiquidCrystal LCD(rs, en, d0, d1, d2, d3);
 float Setpoint, Input, Output;
 float Kp=0.8, Ki=0.8, Kd=0.1;
 
-float angle;
 float calibration_angle = 0;
 
 PIDController pidController(Kp, Ki, Kd);
