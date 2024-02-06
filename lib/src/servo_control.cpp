@@ -10,9 +10,7 @@ float PIDController::calculate(float setpoint, float angle) {
         float error = setpoint - angle;
         integral += error;
         float derivative = error - prevError;
-
         float output = kp * error + ki * integral + kd * derivative;
-
         prevError = error;
 
         return output;
@@ -24,20 +22,6 @@ void changeServoPosition(int angle, Servo &servo1) {
   delay(10);
 }
 
-
-void setAngle(Servo &servo1) {
-  // Read a position value from the serial port
-  Serial.println("Enter the angle: ");
-  delay(3000);
-  while (Serial.available() == 0) {
-    delay(10);
-  }
-  if (Serial.available() > 0) {
-    int angle = Serial.parseInt();
-    // Change the servo position
-    changeServoPosition(angle, servo1);
-  };
-}
 
 void sweepAngle(Servo &servo1) {
   // Sweep from 0 to 180 degrees
